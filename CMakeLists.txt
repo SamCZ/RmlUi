@@ -31,10 +31,6 @@ if(APPLE)
 	endif (NOT CMAKE_OSX_ARCHITECTURES AND BUILD_UNIVERSAL_BINARIES)
 endif(APPLE)
 
-if(COMMAND cmake_policy)
-	cmake_policy(SET CMP0015 NEW)
-endif(COMMAND cmake_policy)
-
 # Enable the use of MACOSX_RPATH by default for CMake v3.0+; this effectively 
 # allows plug 'n' play functionality, so to speak -- the resulting shared 
 # library files can simply be copied over into the end-user's application 
@@ -52,6 +48,8 @@ endif(POLICY CMP0072)
 if(POLICY CMP0074)
 	cmake_policy(SET CMP0074 NEW)
 endif(POLICY CMP0074)
+
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW) # set() overrides option()
 
 project(RmlUi LANGUAGES C CXX VERSION 4.4)
 
@@ -433,6 +431,15 @@ endif ()
 if( CUSTOM_CONFIGURATION AND CUSTOM_LINK_LIBRARIES )
 	target_link_libraries(RmlCore PUBLIC ${CUSTOM_LINK_LIBRARIES})
 endif ()
+
+install(TARGETS freetype
+				EXPORT RmlUiTargets
+				LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+				ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+				RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+				)
+set(RMLUI_EXPORTED_TARGETS ${RMLUI_EXPORTED_TARGETS} freetype)
+target_link_libraries(RmlCore PUBLIC freetype)
 
 if (PRECOMPILED_HEADERS_ENABLED)
 	target_precompile_headers(RmlCore PRIVATE ${PROJECT_SOURCE_DIR}/Source/Core/precompiled.h)
