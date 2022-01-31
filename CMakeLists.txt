@@ -320,18 +320,6 @@ include(FileList)
 # Find dependencies ================
 #===================================
 
-# FreeType
-if(NOT NO_FONT_INTERFACE_DEFAULT)
-	find_package(Freetype REQUIRED)
-
-	if(MSVC AND FREETYPE_VERSION_STRING STREQUAL "2.11.0")
-		message(WARNING "You are using FreeType version 2.11.0 which introduced an issue that causes a crash on startup on some of the samples. Please avoid this version specifically.")
-	endif()
-
-	list(APPEND CORE_LINK_LIBS ${FREETYPE_LIBRARIES})
-	list(APPEND CORE_INCLUDE_DIRS ${FREETYPE_INCLUDE_DIRS})
-endif()
-
 # Lua
 if(BUILD_LUA_BINDINGS)
 	find_package(Lua REQUIRED)
