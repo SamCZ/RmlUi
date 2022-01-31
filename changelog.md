@@ -1,3 +1,5 @@
+* [RmlUi 4.3](#rmlui-43)
+* [RmlUi 4.2](#rmlui-42)
 * [RmlUi 4.1](#rmlui-41)
 * [RmlUi 4.0](#rmlui-40)
 * [RmlUi 3.3](#rmlui-33)
@@ -6,7 +8,97 @@
 * [RmlUi 3.0](#rmlui-30)
 * [RmlUi 2.0](#rmlui-20)
 
-## RmlUi 4.2 (WIP)
+## RmlUi 4.4 (WIP)
+
+### Improvements
+
+- Release memory pools on `Rml::Shutdown`, or manually through the core API. [#263](https://github.com/mikke89/RmlUi/issues/263) [#265](https://github.com/mikke89/RmlUi/pull/265) (thanks @jack9267)
+- Fix classes not always copied over to a cloned element. [#264](https://github.com/mikke89/RmlUi/issues/264)
+- `select` element: Fix clipping on select box.
+- The `opacity` property is now also applied to font effects. [#270](https://github.com/mikke89/RmlUi/issues/270)
+- Drag clones are now positioned correctly when their ancestors use transforms. [#269](https://github.com/mikke89/RmlUi/issues/269)
+- Drag clones no longer inherit backgrounds and decoration from the cloned element's document body.
+
+### Layout
+
+- Fix offsets of relatively positioned elements with percentage positioning. [#262](https://github.com/mikke89/RmlUi/issues/262)
+
+### Samples
+
+- New sample for integration with SDL2's native renderer. [#252](https://github.com/mikke89/RmlUi/pull/252) (thanks @1bsyl)
+
+### Breaking changes
+
+- `FontEngineInterface::GenerateString` now takes a new argument, `opacity`.
+
+
+## RmlUi 4.3
+
+### Flexbox layout
+
+Support for flexible box layout. [#182](https://github.com/mikke89/RmlUi/issues/182) [#257](https://github.com/mikke89/RmlUi/pull/257)
+
+```css
+display: flex;
+```
+
+See usage examples, differences from CSS, performance tips, and all the details [in the flexbox documentation](https://mikke89.github.io/RmlUiDoc/pages/rcss/flexboxes.html).
+
+### Elements
+
+- `select` element:
+  - Emit `change` event even when the value of the newly selected option is the same.
+  - Do not wrap around when using up/down keys on options.
+  - Fix unintentional clipping of the scrollbar.
+- `tabset` element: Fix index parameter having no effect in ElementTabSet::SetPanel and ElementTabSet::SetTab. [#237](https://github.com/mikke89/RmlUi/issues/237) [#246](https://github.com/mikke89/RmlUi/pull/246) (thanks @nimble0)
+
+### RCSS
+
+- Add (non-standard) property value `clip: always` to force clipping to the element, [see `clip` documentation](https://mikke89.github.io/RmlUiDoc/pages/rcss/visual_effects.html#clip). [#235](https://github.com/mikke89/RmlUi/issues/235) [#251](https://github.com/mikke89/RmlUi/pull/251) (thanks @MatthiasJFM)
+- Escape character changed from forward slash to backslash `\` to align with CSS.
+
+### Layout improvements
+
+- See flexbox layout support above.
+- Fix an issue where some elements could end up rendered at the wrong offset after scrolling. [#230](https://github.com/mikke89/RmlUi/issues/230)
+- Improve behavior for collapsing negative vertical margins.
+- Pixel rounding improvements to the clip region.
+- Performance improvement: Avoid unnecesssary extra layouting step in some situations when scrollbars are added.
+
+### Samples
+
+- Add clipboard support to X11 samples. [#231](https://github.com/mikke89/RmlUi/pull/231) (thanks @barotto)
+- Windows shell: Fix OpenGL error on startup.
+
+### Tests
+
+- Visual tests suite: Add ability to overlay the previous reference capture of the test using the shortcut Ctrl+Q.
+- Add support for CSS flexbox tests to the CSS tests converter.
+
+### Lua plugin
+
+- Make Lua plugin API consistently one-indexed instead of zero-indexed. [#237](https://github.com/mikke89/RmlUi/issues/237) [#247](https://github.com/mikke89/RmlUi/pull/247) (thanks @nimble0)
+- Fix crash due to double delete in the Lua plugin. [#216](https://github.com/mikke89/RmlUi/issues/216)
+
+### Dependencies
+
+- Update LunaSVG plugin for compatibility with v2.3.0. [#232](https://github.com/mikke89/RmlUi/issues/232)
+- Warn when using FreeType 2.11.0 with the MSVC compiler, as this version introduced [an issue](https://gitlab.freedesktop.org/freetype/freetype/-/issues/1092) leading to crashes.
+
+### Build improvements
+
+- Fix log message format string when compiling in debug mode. [#234](https://github.com/mikke89/RmlUi/pull/234) (thanks @barotto)
+- Avoid enum name collisions with Windows header macros. [#258](https://github.com/mikke89/RmlUi/issues/258)
+
+### Breaking changes
+
+- The `clip` property is now non-inherited. Users may need to update their RCSS selectors to achieve the same clipping behavior as previously when using this property.
+- Minor changes to the clipping behavior when explicitly using the `clip` property, may lead to different results in some circumstances.
+- RCSS escape character is now `\` instead of `/`.
+- Lua plugin: Some scripts may need to be changed from using zero-based indexing to one-indexing.
+
+
+## RmlUi 4.2
 
 ### Improvements
 
@@ -14,12 +106,15 @@
 - Improve color blending and animations. [#203](https://github.com/mikke89/RmlUi/pull/203) [#208](https://github.com/mikke89/RmlUi/pull/208) (thanks @jac8888)
 - Improve error messages on missing font face.
 - Export `Rml::Assert()` in release mode. [#209](https://github.com/mikke89/RmlUi/pull/209) (thanks @kinbei)
+- Add `.clang-format`. [#223](https://github.com/mikke89/RmlUi/issues/223)
 
 ### Elements
 
 - Fix a crash in some situations where the `input.range` element could result in infinite recursion. [#202](https://github.com/mikke89/RmlUi/issues/202)
 - The `input.text` element will no longer copy to clipboard when the selection is empty.
+- Checkboxes (`input.checkbox`) no longer require a `value` attribute to properly function. [#214](https://github.com/mikke89/RmlUi/pull/214) (thanks @ZombieRaccoon)
 - Fix `handle` element resizing incorrectly when the size target has `box-sizing: border-box`. [#215](https://github.com/mikke89/RmlUi/pull/215) (thanks @nimble0)
+- Improve warnings when using unsupported positioning and floating modes on tables. [#221](https://github.com/mikke89/RmlUi/issues/221)
 
 ### Samples
 
@@ -32,10 +127,12 @@
 - Fix an issue in data bindings where text expressions initialized with an empty string would not be evaluated correctly. [#213](https://github.com/mikke89/RmlUi/issues/213)
 - Fix an issue in the FreeType font engine where `.woff` files would cause a crash on shutdown. [#217](https://github.com/mikke89/RmlUi/issues/217)
 - Fix inline styles not always being applied on a cloned element. [#218](https://github.com/mikke89/RmlUi/issues/218)
+- Fix render interface destructor calling virtual functions in some circumstances. [#222](https://github.com/mikke89/RmlUi/issues/222)
 
 ### Breaking changes
 
 - Removed built-in conversion functions between UTF-8 and UTF-16 character encodings.
+- Slightly modified the lifetime requirements for the render interface for special use cases, see [requirements here](https://github.com/mikke89/RmlUi/blob/aa070e7292302f9e61f3b0b3f60e13aded0561d6/Include/RmlUi/Core/Core.h#L99-L100). Will warn in debug mode on wrong use. [#222](https://github.com/mikke89/RmlUi/issues/222)
 
 
 

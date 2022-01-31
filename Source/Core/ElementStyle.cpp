@@ -620,8 +620,6 @@ PropertyIdSet ElementStyle::ComputeValues(Style::ComputedValues& values, const S
 	{
 		// Inherited properties are copied here, but may be overwritten below by locally defined properties
 		// Line-height and font-size are computed above
-		values.clip = parent_values->clip;
-		
 		values.color = parent_values->color;
 		values.opacity = parent_values->opacity;
 
@@ -905,6 +903,34 @@ PropertyIdSet ElementStyle::ComputeValues(Style::ComputedValues& values, const S
 			break;
 		case PropertyId::FontEffect:
 			values.has_font_effect = (p->unit == Property::FONTEFFECT);
+			break;
+
+		case PropertyId::AlignContent:
+			values.align_content = (AlignContent)p->Get<int>();
+			break;
+		case PropertyId::AlignItems:
+			values.align_items = (AlignItems)p->Get<int>();
+			break;
+		case PropertyId::AlignSelf:
+			values.align_self = (AlignSelf)p->Get<int>();
+			break;
+		case PropertyId::FlexBasis:
+			values.flex_basis = ComputeLengthPercentageAuto(p, font_size, document_font_size, dp_ratio, vp_dimensions);
+			break;
+		case PropertyId::FlexDirection:
+			values.flex_direction = (FlexDirection)p->Get<int>();
+			break;
+		case PropertyId::FlexGrow:
+			values.flex_grow = p->Get<float>();
+			break;
+		case PropertyId::FlexShrink:
+			values.flex_shrink = p->Get<float>();
+			break;
+		case PropertyId::FlexWrap:
+			values.flex_wrap = (FlexWrap)p->Get<int>();
+			break;
+		case PropertyId::JustifyContent:
+			values.justify_content = (JustifyContent)p->Get<int>();
 			break;
 
 		// Unhandled properties. Must be manually retrieved with 'GetProperty()'.

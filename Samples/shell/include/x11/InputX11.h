@@ -30,12 +30,7 @@
 #define RMLUI_SHELL_X11_INPUTX11_H
 
 #include <X11/Xlib.h>
-
-// The None define from X.h conflicts with RmlUi code base,
-// use the constant 0L instead where necessary
-#ifdef None
-  #undef None
-#endif
+#include <x11/X11MacroZapper.h>
 
 #include "Input.h"
 

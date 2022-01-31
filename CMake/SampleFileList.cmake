@@ -126,6 +126,17 @@ set(sdl2_SRC_FILES
     ${PROJECT_SOURCE_DIR}/Samples/basic/sdl2/src/SystemInterfaceSDL2.cpp
 )
 
+set(sdl2_sdlrenderer_HDR_FILES
+    ${PROJECT_SOURCE_DIR}/Samples/basic/sdl2_sdlrenderer/src/RenderInterfaceSDL2.h
+    ${PROJECT_SOURCE_DIR}/Samples/basic/sdl2_sdlrenderer/src/SystemInterfaceSDL2.h
+)
+
+set(sdl2_sdlrenderer_SRC_FILES
+    ${PROJECT_SOURCE_DIR}/Samples/basic/sdl2_sdlrenderer/src/main.cpp
+    ${PROJECT_SOURCE_DIR}/Samples/basic/sdl2_sdlrenderer/src/RenderInterfaceSDL2.cpp
+    ${PROJECT_SOURCE_DIR}/Samples/basic/sdl2_sdlrenderer/src/SystemInterfaceSDL2.cpp
+)
+
 set(sfml2_HDR_FILES
     ${PROJECT_SOURCE_DIR}/Samples/basic/sfml2/src/RenderInterfaceSFML.h
     ${PROJECT_SOURCE_DIR}/Samples/basic/sfml2/src/SystemInterfaceSFML.h
@@ -293,5 +304,6 @@ else()
        )
        list(APPEND shell_HDR_FILES
                ${PROJECT_SOURCE_DIR}/Samples/shell/include/x11/InputX11.h
+               ${PROJECT_SOURCE_DIR}/Samples/shell/include/x11/X11MacroZapper.h
        )
 endif()

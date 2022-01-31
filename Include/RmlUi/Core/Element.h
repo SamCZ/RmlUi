@@ -566,11 +566,6 @@ public:
 	DataModel* GetDataModel() const;
 	//@}
 	
-	/// Returns true if this element requires clipping
-	int GetClippingIgnoreDepth();
-	/// Returns true if this element has clipping enabled
-	bool IsClippingEnabled();
-
 	/// Gets the render interface owned by this element's context.
 	/// @return The element's context's render interface.
 	RenderInterface* GetRenderInterface();
@@ -655,7 +650,8 @@ private:
 	
 	void SetDataModel(DataModel* new_data_model);
 
-	void DirtyOffset();
+	void DirtyAbsoluteOffset();
+	void DirtyAbsoluteOffsetRecursive();
 	void UpdateOffset();
 	void SetBaseline(float baseline);
 
@@ -719,8 +715,8 @@ private:
 	Vector2f relative_offset_position;	// the offset of a relatively positioned element
 	bool offset_fixed;
 
-	mutable Vector2f absolute_offset;
-	mutable bool offset_dirty;
+	Vector2f absolute_offset;
+	bool absolute_offset_dirty;
 
 	// The offset this element adds to its logical children due to scrolling content.
 	Vector2f scroll_offset;

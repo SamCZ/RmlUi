@@ -59,6 +59,8 @@
 #include "../SVG/SVGPlugin.h"
 #endif
 
+#include "Pool.h"
+
 
 namespace Rml {
 
@@ -79,6 +81,9 @@ static bool initialised = false;
 
 using ContextMap = UnorderedMap< String, ContextPtr >;
 static ContextMap contexts;
+
+// The ObserverPtrBlock pool
+extern Pool<ObserverPtrBlock>* observerPtrBlockPool;
 
 #ifndef RMLUI_VERSION
 	#define RMLUI_VERSION "custom"
@@ -178,6 +183,9 @@ void Shutdown()
 	default_file_interface.reset();
 
 	Log::Shutdown();
+
+	// Release any memory pools
+	ReleaseMemoryPools();
 }
 
 // Returns the version of this RmlUi library.
@@ -361,14 +369,23 @@ StringList GetTextureSourceList()
 	return TextureDatabase::GetSourceList();
 }
 
-void ReleaseTextures()
+void ReleaseTextures(RenderInterface* in_render_interface)
 {
-	TextureDatabase::ReleaseTextures();
+	TextureDatabase::ReleaseTextures(in_render_interface);
 }
 
 void ReleaseCompiledGeometry()
 {
 	return GeometryDatabase::ReleaseAll();
+}
+
+void ReleaseMemoryPools()
+{
+	if (observerPtrBlockPool && observerPtrBlockPool->GetNumAllocatedObjects() <= 0)
+	{
+		delete observerPtrBlockPool;
+		observerPtrBlockPool = nullptr;
+	}
 }
 
 } // namespace Rml

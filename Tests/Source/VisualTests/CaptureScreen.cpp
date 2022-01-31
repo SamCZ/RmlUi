@@ -32,6 +32,7 @@
 #include <ShellRenderInterfaceOpenGL.h>
 #include <RmlUi/Core/Log.h>
 #include <RmlUi/Core/StringUtilities.h>
+#include <RmlUi/Core/GeometryUtilities.h>
 #include <cmath>
 
 #define LODEPNG_NO_COMPILE_CPP
@@ -94,7 +95,8 @@ struct DeferFree {
 };
 
 
-ComparisonResult CompareScreenToPreviousCapture(ShellRenderInterfaceOpenGL* shell_renderer, const Rml::String& filename)
+ComparisonResult CompareScreenToPreviousCapture(
+	ShellRenderInterfaceOpenGL* shell_renderer, const Rml::String& filename, bool write_diff_image, TextureGeometry* out_geometry)
 {
 	using Image = ShellRenderInterfaceOpenGL::Image;
 
@@ -103,7 +105,7 @@ ComparisonResult CompareScreenToPreviousCapture(ShellRenderInterfaceOpenGL* shel
 	unsigned char* data_ref = nullptr;
 	unsigned int w_ref = 0, h_ref = 0;
 
-	unsigned int lodepng_result = lodepng_decode24_file(&data_ref, &w_ref, &h_ref, input_path.c_str());
+	unsigned int lodepng_result = lodepng_decode32_file(&data_ref, &w_ref, &h_ref, input_path.c_str());
 	DeferFree defer_free{ data_ref };
 
 	if (lodepng_result)
@@ -115,6 +117,24 @@ ComparisonResult CompareScreenToPreviousCapture(ShellRenderInterfaceOpenGL* shel
 	}
 	RMLUI_ASSERT(w_ref > 0 && h_ref > 0 && data_ref);
 	
+	// Optionally render the previous capture to a texture.
+	if (out_geometry)
+	{
+		if (!shell_renderer->GenerateTexture(out_geometry->texture_handle, data_ref, Rml::Vector2i((int)w_ref, (int)h_ref)))
+		{
+			ComparisonResult result;
+			result.success = false;
+			result.error_msg = Rml::CreateString(1024, "Could not generate texture from file %s", input_path.c_str());
+			return result;
+		}
+
+		const Rml::Colourb colour = {255, 255, 255, 255};
+		const Rml::Vector2f uv_top_left = {0, 0};
+		const Rml::Vector2f uv_bottom_right = {1, 1};
+
+		Rml::GeometryUtilities::GenerateQuad(out_geometry->vertices, out_geometry->indices, Rml::Vector2f(0, 0),
+			Rml::Vector2f((float)w_ref, (float)h_ref), colour, uv_top_left, uv_bottom_right, 0);
+	}
 
 	Image screen = shell_renderer->CaptureScreen();
 	if (!screen.data)
@@ -159,7 +179,7 @@ ComparisonResult CompareScreenToPreviousCapture(ShellRenderInterfaceOpenGL* shel
 		for (int xb = 0; xb < wb_ref; xb++)
 		{
 			const int i_ref = yb_ref + xb;
-			Rml::byte pix_ref = data_ref[i_ref];
+			Rml::byte pix_ref = data_ref[(i_ref * 4) / 3];
 			Rml::byte pix_screen = screen.data[yb_screen + xb];
 			diff.data[i_ref] = (Rml::byte)std::abs((int)pix_ref - (int)pix_screen);
 			sum_diff += (size_t)diff.data[i_ref];
@@ -176,7 +196,7 @@ ComparisonResult CompareScreenToPreviousCapture(ShellRenderInterfaceOpenGL* shel
 	result.similarity_score = (sum_diff == 0 ? 1.0 : 1.0 - std::log(double(sum_diff)) / std::log(double(max_diff)));
 
 	// Write the diff image to file if they are not equal.
-	if (!result.is_equal)
+	if (write_diff_image && !result.is_equal)
 	{
 		Rml::String out_filename = filename;
 		size_t offset = filename.rfind('.');
@@ -196,6 +216,20 @@ ComparisonResult CompareScreenToPreviousCapture(ShellRenderInterfaceOpenGL* shel
 	return result;
 }
 
+void RenderTextureGeometry(ShellRenderInterfaceOpenGL* shell_renderer, TextureGeometry& geometry)
+{
+	if (geometry.texture_handle)
+		shell_renderer->RenderGeometry(geometry.vertices, 4, geometry.indices, 6, geometry.texture_handle, Rml::Vector2f(0, 0));
+}
+
+void ReleaseTextureGeometry(ShellRenderInterfaceOpenGL* shell_renderer, TextureGeometry& geometry)
+{
+	if (geometry.texture_handle)
+	{
+		shell_renderer->ReleaseTexture(geometry.texture_handle);
+		geometry.texture_handle = 0;
+	}
+}
 
 // Suppress warnings emitted by lodepng
 #if defined(RMLUI_PLATFORM_WIN32) && !defined(__MINGW32__)

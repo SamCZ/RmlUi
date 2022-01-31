@@ -39,10 +39,12 @@ class ShellRenderInterfaceOpenGL;
 
 class TestNavigator : public Rml::EventListener {
 public:
-	TestNavigator(ShellRenderInterfaceOpenGL* shell_renderer, Rml::Context* context, TestViewer* viewer, TestSuiteList test_suites);
+	TestNavigator(ShellRenderInterfaceOpenGL* shell_renderer, Rml::Context* context, TestViewer* viewer, TestSuiteList test_suites, int start_index);
 	~TestNavigator();
 
 	void Update();
+
+	void Render();
 
 protected:
 	void ProcessEvent(Rml::Event& event) override;
@@ -63,6 +65,8 @@ private:
 
 	void UpdateGoToText(bool out_of_bounds = false);
 
+	void ShowReference(bool show, bool clear);
+
 	Rml::String GetImageFilenameFromCurrentTest();
 
 	ShellRenderInterfaceOpenGL* shell_renderer;
@@ -75,6 +79,10 @@ private:
 	int suite_index = 0;
 	int goto_index = -1;
 	SourceType source_state = SourceType::None;
+
+	bool show_reference = false;
+	ComparisonResult reference_comparison;
+	TextureGeometry reference_geometry;
 
 	IterationState iteration_state = IterationState::None;
 

@@ -34,6 +34,7 @@
 #include <RmlUi/Core/Context.h>
 #include <RmlUi/Core/Element.h>
 #include <Shell.h>
+#include <ShellRenderInterfaceOpenGL.h>
 #include <cstdio>
 
 // When capturing frames it seems we need to wait at least an extra frame for the newly submitted
@@ -41,7 +42,7 @@
 constexpr int iteration_wait_frame_count = 2;
 
 
-TestNavigator::TestNavigator(ShellRenderInterfaceOpenGL* shell_renderer, Rml::Context* context, TestViewer* viewer, TestSuiteList test_suites)
+TestNavigator::TestNavigator(ShellRenderInterfaceOpenGL* shell_renderer, Rml::Context* context, TestViewer* viewer, TestSuiteList test_suites, int start_index)
 	: shell_renderer(shell_renderer), context(context), viewer(viewer), test_suites(std::move(test_suites))
 {
 	RMLUI_ASSERT(context);
@@ -50,6 +51,8 @@ TestNavigator::TestNavigator(ShellRenderInterfaceOpenGL* shell_renderer, Rml::Co
 	context->GetRootElement()->AddEventListener(Rml::EventId::Keydown, this);
 	context->GetRootElement()->AddEventListener(Rml::EventId::Textinput, this);
 	context->GetRootElement()->AddEventListener(Rml::EventId::Change, this);
+	if(start_index > 0)
+		CurrentSuite().SetIndex(start_index);
 	LoadActiveTest();
 }
 
@@ -59,6 +62,7 @@ TestNavigator::~TestNavigator()
 	context->GetRootElement()->RemoveEventListener(Rml::EventId::Keydown, this);
 	context->GetRootElement()->RemoveEventListener(Rml::EventId::Textinput, this);
 	context->GetRootElement()->RemoveEventListener(Rml::EventId::Change, this);
+	ReleaseTextureGeometry(shell_renderer, reference_geometry);
 }
 
 void TestNavigator::Update()
@@ -99,6 +103,15 @@ void TestNavigator::Update()
 			else
 				StopTestSuiteIteration();
 		}
+	}
+}
+
+void TestNavigator::Render()
+{
+	if (show_reference && reference_geometry.texture_handle)
+	{
+		shell_renderer->RenderGeometry(
+			reference_geometry.vertices, 4, reference_geometry.indices, 6, reference_geometry.texture_handle, Rml::Vector2f(0, 0));
 	}
 }
 
@@ -187,6 +200,11 @@ void TestNavigator::ProcessEvent(Rml::Event& event)
 					source_state = SourceType::None;
 			}
 			viewer->ShowSource(source_state);
+			ShowReference(false, false);
+		}
+		else if (key_identifier == Rml::Input::KI_Q && key_ctrl)
+		{
+			ShowReference(!show_reference, false);
 		}
 		else if (key_identifier == Rml::Input::KI_ESCAPE)
 		{
@@ -335,6 +353,7 @@ void TestNavigator::LoadActiveTest()
 	const TestSuite& suite = CurrentSuite();
 	viewer->LoadTest(suite.GetDirectory(), suite.GetFilename(), suite.GetIndex(), suite.GetNumTests(), suite.GetFilterIndex(), suite.GetNumFilteredTests(), suite_index, (int)test_suites.size());
 	viewer->ShowSource(source_state);
+	ShowReference(false, true);
 	UpdateGoToText();
 }
 
@@ -348,7 +367,7 @@ ComparisonResult TestNavigator::CompareCurrentView()
 {
 	const Rml::String filename = GetImageFilenameFromCurrentTest();
 
-	ComparisonResult result = CompareScreenToPreviousCapture(shell_renderer, filename);
+	ComparisonResult result = CompareScreenToPreviousCapture(shell_renderer, filename, true, nullptr);
 
 	return result;
 }
@@ -512,13 +531,13 @@ void TestNavigator::StopTestSuiteIteration()
 			Rml::Log::Message(Rml::Log::LT_ERROR, "Failed writing comparison log output to file %s", log_path.c_str());
 	}
 
-	suite.SetIndex(iteration_initial_index);
-	LoadActiveTest();
-
 	iteration_index = -1;
 	iteration_initial_index = -1;
 	iteration_wait_frames = -1;
 	iteration_state = IterationState::None;
+
+	suite.SetIndex(iteration_initial_index);
+	LoadActiveTest();
 }
 
 void TestNavigator::UpdateGoToText(bool out_of_bounds)
@@ -527,11 +546,42 @@ void TestNavigator::UpdateGoToText(bool out_of_bounds)
 		viewer->SetGoToText("Go To out of bounds");
 	else if (goto_index > 0)
 		viewer->SetGoToText(Rml::CreateString(64, "Go To: %d", goto_index));
-	else if(goto_index == 0)
+	else if (goto_index == 0)
 		viewer->SetGoToText("Go To:");
+	else if (iteration_state == IterationState::Capture)
+		viewer->SetGoToText("Capturing all tests");
+	else if (iteration_state == IterationState::Comparison)
+		viewer->SetGoToText("Comparing all tests");
+	else if (show_reference)
+		viewer->SetGoToText(Rml::CreateString(100, "Showing reference capture (%.1f%% similar)", reference_comparison.similarity_score * 100.));
 	else
 		viewer->SetGoToText("Press 'F1' for keyboard shortcuts.");
 }
 
+void TestNavigator::ShowReference(bool show, bool clear)
+{
+	if (clear)
+	{
+		ReleaseTextureGeometry(shell_renderer, reference_geometry);
+		reference_comparison = {};
+	}
 
+	Rml::String error_msg;
+	if (show && !reference_geometry.texture_handle)
+	{
+		reference_comparison = CompareScreenToPreviousCapture(shell_renderer, GetImageFilenameFromCurrentTest(), false, &reference_geometry);
 
+		if (!reference_comparison.success)
+			error_msg = reference_comparison.error_msg;
+	}
+
+	show_reference = (show && reference_comparison.success && !reference_comparison.is_equal);
+	viewer->SetAttention(show_reference);
+
+	if (!error_msg.empty())
+		viewer->SetGoToText(error_msg);
+	else if (reference_comparison.is_equal)
+		viewer->SetGoToText("EQUAL to reference capture");
+	else
+		UpdateGoToText();
+}
