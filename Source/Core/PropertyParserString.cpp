@@ -43,7 +43,16 @@ bool PropertyParserString::ParseValue(Property& property, const String& value, c
 {
 	RMLUI_UNUSED(parameters);
 
-	property.value = Variant(value);
+	String::size_type len = value.length();
+	if (len > 2 && value[0] == '\'')
+	{
+		property.value = Variant(value.substr(1, value.length() - 2));
+	}
+	else
+	{
+		property.value = Variant(value);
+	}
+
 	property.unit = Property::STRING;
 
 	return true;
