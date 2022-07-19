@@ -31,14 +31,15 @@
 
 #include <RmlUi/Core/Types.h>
 namespace Rml { class RenderInterface; }
+class TestsRenderInterface;
 
 namespace TestsShell {
 
 	// Will initialize the shell and create a context on first use.
-	Rml::Context* GetContext();
+	Rml::Context* GetContext(bool allow_debugger = true);
 
-	void PrepareRenderBuffer();
-	void PresentRenderBuffer();
+	void BeginFrame();
+	void PresentFrame();
 
 	// Render the current state of the context. Press 'escape' or 'return' to break out of the loop.
 	// Useful for viewing documents while building the RML to benchmark.
@@ -53,6 +54,9 @@ namespace TestsShell {
 
 	// Stats only available for the dummy renderer.
 	Rml::String GetRenderStats();
+
+	// Returns nullptr if the dummy renderer is not being used.
+	TestsRenderInterface* GetTestsRenderInterface();
 }
 
 #endif

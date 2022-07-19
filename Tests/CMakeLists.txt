@@ -38,7 +38,7 @@ file(GLOB UnitTests_HDR_FILES ${CMAKE_CURRENT_SOURCE_DIR}/Source/UnitTests/*.h )
 file(GLOB UnitTests_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/Source/UnitTests/*.cpp )
 
 add_executable(UnitTests ${UnitTests_HDR_FILES} ${UnitTests_SRC_FILES})
-target_link_libraries(UnitTests RmlCore doctest::doctest trompeloeil::trompeloeil ${sample_LIBRARIES})
+target_link_libraries(UnitTests RmlCore RmlDebugger doctest::doctest trompeloeil::trompeloeil ${sample_LIBRARIES})
 add_common_target_options(UnitTests)
 
 if(MSVC)
@@ -94,4 +94,17 @@ add_common_target_options(Benchmarks)
 
 if(MSVC)
 	target_compile_definitions(Benchmarks PUBLIC DOCTEST_CONFIG_USE_STD_HEADERS)
+endif()
+
+
+
+#===================================
+# Emscripten assets ================
+#===================================
+
+if(EMSCRIPTEN)
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sLLD_REPORT_UNDEFINED --preload-file ${CMAKE_CURRENT_SOURCE_DIR}/Data/@/Tests/Data/")
+	
+	# Benchmarks additionally use the benchmark sample data.
+	target_link_libraries(Benchmarks "--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/../Samples/basic/benchmark/data/@/Samples/basic/benchmark/data/")
 endif()

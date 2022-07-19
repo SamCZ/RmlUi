@@ -1,3 +1,4 @@
+* [RmlUi 4.4](#rmlui-44)
 * [RmlUi 4.3](#rmlui-43)
 * [RmlUi 4.2](#rmlui-42)
 * [RmlUi 4.1](#rmlui-41)
@@ -8,12 +9,88 @@
 * [RmlUi 3.0](#rmlui-30)
 * [RmlUi 2.0](#rmlui-20)
 
-## RmlUi 4.4 (WIP)
+## RmlUi 5.0 (WIP)
 
-### Improvements
+### Backends
 
+RmlUi 5.0 introduces the backends concept. This is a complete refactoring of the old sample shell, replacing most of it with a multitude of backends. A backend is a combination of a renderer and a platform. The shell is now only used for common functions specific to the included samples.
+
+This change is beneficial in several aspects:
+
+- Makes it easier to integrate RmlUi as users can directly use the renderer and platform suited for their setup.
+- Makes it a lot easier to add new backends and maintain existing ones.
+- Allows all the samples to run on any backend by choosing the desired backend during CMake configuration.
+
+All samples and tests have been updated to work with the [backends interface](Backends/RmlUi_Backend.h), which is a very light abstraction over all the different backends.
+
+A new GLFW backend has been added, along with the SFML and SDL platforms ported from the old samples. The old macOS shell has been removed as it used a legacy API that is no longer working on modern Apple devices. Now the samples build again on macOS using one of the windowing libraries such as GLFW or SDL. Further, an OpenGL 3 renderer has been added (#261), and also Emscripten support so RmlUi even runs in web browsers now.
+
+See the [Backends section in the readme](readme.md#rmlui-backends) for more details.
+
+### Text editing
+
+The `<textarea>` and `<input type="text">` elements have been improved in several aspects.
+
+- Improved cursor navigation between words (Ctrl + Left/Right).
+- Selection is now expanded to highlight selected newlines.
+- When word-wrap is enabled, words can now be broken to avoid overflow.
+- Fixed several issues where the text cursor would be offset from the text editing operations. In particular after word wrapping, or when suppressed characters were present in the text field's value. #313
+- Fixed an issue where Windows newline endings (\r\n) would produce an excessive space character.
+- Fixed operation of page up/down numpad keys being swapped.
+- The input method editor (IME) is now positioned at the caret during text editing on the Windows backend. #303 #305 (thanks @xland)
+- Fix slow input handling especially with CJK input on the Win32 backend. #311
+
+### Lua plugin
+
+- Add length to proxy for element children. #315 (thanks @nimble0)
+
+### Layout improvements
+
+- Scroll and slider elements now use containing block's height instead of width to calculate height-relative values. #314 #321 (thanks @nimble0)
+- Generate warnings when directly nesting flexboxes and other unsupported elements in a top-level formatting context. #320
+
+### Context input
+
+- The hover state of any elements under the mouse will now automatically be updated during `Context::Update()`. #220
+- Added `Context::ProcessMouseLeave()` which ensures that the hovered state is removed from all elements and stops the context update from automatically hovering elements.
+- When `Context::ProcessMouseMove()` is called next the context update will start updating hover states again.
+- Added support for mouse leave events on all backends.
+
+### General fixes
+
+- `<img>` element: Fix wrong dp-scaling being applied when an image is cloned through a parent element. #310
+- Logging a message without an installed system interface will now be written to cout instead of crashing the application.
+- Fixed a crash when the debugger plugin was shutdown manually. #322 #323 (thanks @LoneBoco)
+
+### Breaking changes
+
+- Changed the signature of the keyboard activation in the system interface, it now passes the caret position and line height: `SystemInterface::ActivateKeyboard(Rml::Vector2f caret_position, float line_height)`.
+- Removed the boolean result returned from `Rml::Debugger::Shutdown()`.
+
+## RmlUi 4.4
+
+### Fonts
+
+- Support for color emojis 🎉. [#267](https://github.com/mikke89/RmlUi/issues/267)
+- Support for loading fonts with multiple included font weights. [#296](https://github.com/mikke89/RmlUi/pull/296) (thanks @MexUK)
+- The `font-weight` property now supports numeric values. [#296](https://github.com/mikke89/RmlUi/pull/296) (thanks @MexUK)
+- The `opacity` property is now also applied to font effects. [#270](https://github.com/mikke89/RmlUi/issues/270)
+
+### Performance and resource management
+
+- Substantial performance improvement when looking up style rules with class names. Fixes some cases of low performance, see [#293](https://github.com/mikke89/RmlUi/issues/293).
+- Reduced memory usage, more than halved the size of `ComputedValues`.
+- Added `Rml::ReleaseFontResources` to release unused font textures, cached glyph data, and related resources.
 - Release memory pools on `Rml::Shutdown`, or manually through the core API. [#263](https://github.com/mikke89/RmlUi/issues/263) [#265](https://github.com/mikke89/RmlUi/pull/265) (thanks @jack9267)
+
+### Layout
+
+- Fix offsets of relatively positioned elements with percentage positioning. [#262](https://github.com/mikke89/RmlUi/issues/262)
 - `select` element: Fix clipping on select box.
+
+### Data binding
+
+- Add `DataModelHandle::DirtyAllVariables()` to mark all variables in the data model as dirty. [#289](https://github.com/mikke89/RmlUi/pull/289) (thanks @EhWhoAmI)
 
 ### Cloning
 
@@ -21,31 +98,20 @@
 - Drag clones are now positioned correctly when their ancestors use transforms. [#269](https://github.com/mikke89/RmlUi/issues/269)
 - Drag clones no longer inherit backgrounds and decoration from the cloned element's document body.
 
-### Fonts
-
-- Support for color emojis 🎉. [#267](https://github.com/mikke89/RmlUi/issues/267)
-- The `opacity` property is now also applied to font effects. [#270](https://github.com/mikke89/RmlUi/issues/270)
-
-### Layout
-
-- Fix offsets of relatively positioned elements with percentage positioning. [#262](https://github.com/mikke89/RmlUi/issues/262)
-
-### Samples
+### Samples and plugins
 
 - New sample for integration with SDL2's native renderer. [#252](https://github.com/mikke89/RmlUi/pull/252) (thanks @1bsyl)
+- Add `width` and `height` attributes to the `<svg>` element. [#283](https://github.com/mikke89/RmlUi/pull/283) (thanks @EhWhoAmI)
 
 ### Build improvements
 
 - CMake: Mark RmlCore dependencies as private. [#274](https://github.com/mikke89/RmlUi/pull/274) (thanks @jonesmz)
 - CMake: Allow `lunasvg` library be found when located in builtin tree. [#282](https://github.com/mikke89/RmlUi/pull/282) (thanks @EhWhoAmI)
 
-### SVG Plugin
-
-- Add `width` and `height` attributes to the `<svg>` element. [#283](https://github.com/mikke89/RmlUi/pull/283) (thanks @EhWhoAmI)
-
 ### Breaking changes
 
-- `FontEngineInterface::GenerateString` now takes a new argument, `opacity`.
+- `FontEngineInterface::GenerateString` now takes an additional argument, `opacity`.
+- Computed values are now retrieved by function calls instead of member objects.
 
 
 ## RmlUi 4.3
